@@ -117,7 +117,7 @@ jobs:
           platform: x64
 
       - name: Setup emsdk
-        uses: mymindstorm/setup-emsdk@v14
+        uses: mymindstorm/setup-emsdk@v16
         with:
           version: 3.1.56
 
