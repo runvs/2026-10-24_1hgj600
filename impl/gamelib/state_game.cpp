@@ -61,8 +61,10 @@ void StateGame::spawnAsteroid()
     auto const fallSpeed = 30.0f;
     auto const velocity = jt::Vector2f { jt::Random::getFloat(-20.0f, 20.0f), fallSpeed };
     auto asteroid = std::make_shared<Asteroid>(velocity);
-    asteroid->setPosition(jt::Random::getRandomPointIn(
-        GP::GetScreenSize() - jt::Vector2f { asteroidSize, asteroidSize }));
+    auto const halfSize = asteroidSize / 2.0f;
+    auto const screenSize = GP::GetScreenSize();
+    asteroid->setPosition(jt::Random::getRandomPointIn(jt::Rectf {
+        halfSize, halfSize, screenSize.x - asteroidSize, screenSize.y - asteroidSize }));
     add(asteroid);
     m_asteroids->push_back(asteroid);
 }
