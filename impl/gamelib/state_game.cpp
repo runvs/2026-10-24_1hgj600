@@ -10,6 +10,7 @@
 #include <screeneffects/vignette.hpp>
 #include <shape.hpp>
 #include <state_menu.hpp>
+#include <algorithm>
 
 void StateGame::onCreate()
 {
@@ -46,6 +47,8 @@ void StateGame::onCreate()
     add(m_vignette);
     m_hud = std::make_shared<Hud>();
     add(m_hud);
+    m_hud->getObserverTime()->notify(m_timeRemaining);
+    m_hud->getObserverScore()->notify(m_score);
 
     // StateGame will call drawObjects itself.
     setAutoDraw(false);
@@ -60,7 +63,10 @@ void StateGame::spawnAsteroid()
     auto const asteroidSize = 32.0f;
     auto const fallSpeed = 30.0f;
     auto const velocity = jt::Vector2f { jt::Random::getFloat(-20.0f, 20.0f), fallSpeed };
-    auto asteroid = std::make_shared<Asteroid>(velocity);
+    auto asteroid = std::make_shared<Asteroid>(velocity, [this]() {
+        m_score++;
+        m_hud->getObserverScore()->notify(m_score);
+    });
     auto const halfSize = asteroidSize / 2.0f;
     auto const screenSize = GP::GetScreenSize();
     asteroid->setPosition(jt::Random::getRandomPointIn(jt::Rectf {
@@ -74,13 +80,11 @@ void StateGame::onUpdate(float const elapsed)
     if (m_running) {
         m_world->step(elapsed, GP::PhysicVelocityIterations(), GP::PhysicPositionIterations());
         // update game logic here
+        m_timeRemaining = std::max(m_timeRemaining - elapsed, 0.0f);
+        m_hud->getObserverTime()->notify(m_timeRemaining);
         if (getGame()->input().keyboard()->justPressed(jt::KeyCode::A)) {
             m_scoreP1++;
             m_hud->getObserverScoreP1()->notify(m_scoreP1);
-        }
-        if (getGame()->input().keyboard()->justPressed(jt::KeyCode::D)) {
-            m_scoreP2++;
-            m_hud->getObserverScoreP2()->notify(m_scoreP2);
         }
         if (getGame()->input().keyboard()->pressed(jt::KeyCode::LShift)
             && getGame()->input().keyboard()->pressed(jt::KeyCode::Escape)) {

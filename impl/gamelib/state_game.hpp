@@ -34,7 +34,9 @@ private:
     bool m_hasEnded { false };
 
     int m_scoreP1 { 0 };
-    int m_scoreP2 { 0 };
+    int m_score { 0 };
+
+    float m_timeRemaining { 45.0f };
 
     void onCreate() override;
     void onEnter() override;

@@ -10,8 +10,9 @@ constexpr float flashDuration { 0.3f };
 constexpr float killDelay { flashDuration * 0.5f };
 } // namespace
 
-Asteroid::Asteroid(jt::Vector2f const& velocity)
+Asteroid::Asteroid(jt::Vector2f const& velocity, std::function<void()> onHitCallback)
     : m_velocity { velocity }
+    , m_onHitCallback { std::move(onHitCallback) }
 {
 }
 
@@ -52,6 +53,9 @@ void Asteroid::onHit()
     m_isHit = true;
     m_hitTimer = killDelay;
     m_sprite->flash(flashDuration);
+    if (m_onHitCallback) {
+        m_onHitCallback();
+    }
 
     auto const hitScale = baseScale * hitScaleFactor;
     m_tweens.add(jt::TweenScale::create(m_sprite, killDelay, jt::Vector2f { baseScale, baseScale },
