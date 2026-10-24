@@ -1,4 +1,5 @@
 #include "asteroid.hpp"
+#include <game_properties.hpp>
 #include <math_helper.hpp>
 #include <tweens/tween_alpha.hpp>
 #include <tweens/tween_scale.hpp>
@@ -10,9 +11,11 @@ constexpr float flashDuration { 0.3f };
 constexpr float killDelay { flashDuration * 0.5f };
 } // namespace
 
-Asteroid::Asteroid(jt::Vector2f const& velocity, std::function<void()> onHitCallback)
+Asteroid::Asteroid(jt::Vector2f const& velocity, std::function<void()> onHitCallback,
+    std::function<void()> onOutOfScreenCallback)
     : m_velocity { velocity }
     , m_onHitCallback { std::move(onHitCallback) }
+    , m_onOutOfScreenCallback { std::move(onOutOfScreenCallback) }
 {
 }
 
@@ -30,9 +33,15 @@ void Asteroid::doUpdate(float elapsed)
         if (m_hitTimer <= 0.0f) {
             kill();
         }
-    } else {
+    } else if (!m_isFrozen) {
         m_position += m_velocity * elapsed;
-        if (isClicked()) {
+        if (m_sprite->getGlobalBounds().top > GP::GetScreenSize().y) {
+            // fell out of the screen
+            if (m_onOutOfScreenCallback) {
+                m_onOutOfScreenCallback();
+            }
+            kill();
+        } else if (isClicked()) {
             onHit();
         }
     }
@@ -68,3 +77,5 @@ void Asteroid::doDraw() const { m_sprite->draw(renderTarget()); }
 void Asteroid::setPosition(jt::Vector2f const& pos) { m_position = pos; }
 
 jt::Vector2f Asteroid::getPosition() const { return m_position; }
+
+void Asteroid::freeze() { m_isFrozen = true; }

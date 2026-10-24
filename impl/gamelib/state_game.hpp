@@ -2,6 +2,7 @@
 #define GAME_STATE_GAME_HPP
 
 #include <box2dwrapper/box2d_world_interface.hpp>
+#include <game_properties.hpp>
 #include <game_state.hpp>
 #include <object_group.hpp>
 #include <memory>
@@ -36,7 +37,8 @@ private:
     int m_scoreP1 { 0 };
     int m_score { 0 };
 
-    float m_timeRemaining { 45.0f };
+    float m_timeRemaining { GP::GameDuration() };
+    float m_spawnTimer { 0.0f };
 
     void onCreate() override;
     void onEnter() override;
@@ -46,6 +48,11 @@ private:
     void endGame();
     void createPlayer();
     void spawnAsteroid();
+    void updateAsteroidSpawning(float const elapsed);
+    // 0 at game start, 1 when the timer has run out
+    float getProgress() const;
+    float getTargetAsteroidCount() const;
+    float getSpawnTime() const;
 };
 
 #endif

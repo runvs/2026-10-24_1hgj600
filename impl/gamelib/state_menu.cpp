@@ -7,7 +7,6 @@
 #include <input/input_manager.hpp>
 #include <lerp.hpp>
 #include <log/license_info.hpp>
-#include <algorithm>
 #include <screeneffects/vignette.hpp>
 #include <state_game.hpp>
 #include <state_manager/state_manager_transition_fade_to_black.hpp>
@@ -15,6 +14,7 @@
 #include <tweens/tween_alpha.hpp>
 #include <tweens/tween_color.hpp>
 #include <tweens/tween_position.hpp>
+#include <algorithm>
 
 void StateMenu::onCreate()
 {
@@ -50,6 +50,7 @@ void StateMenu::createShapes()
 void StateMenu::createMenuText()
 {
     createTextTitle();
+    createTextScore();
     createTextStart();
     createTextExplanation();
     createTextCredits();
@@ -101,6 +102,21 @@ void StateMenu::createTextTitle()
     m_textTitle = jt::dh::createText(renderTarget(), GP::GameName(), 32u, GP::PaletteFontFront());
     m_textTitle->setPosition({ half_width, 10 });
     m_textTitle->setShadow(GP::PaletteFontShadow(), jt::Vector2f { 3, 3 });
+}
+
+void StateMenu::createTextScore()
+{
+    m_textScore = jt::dh::createText(renderTarget(), "", 14u, GP::getPalette().getColor(7));
+    m_textScore->setPosition({ GP::GetScreenSize().x / 2.0f, 46 });
+    m_textScore->setShadow(GP::PaletteFontShadow(), jt::Vector2f { 1, 1 });
+}
+
+void StateMenu::setScore(int const score)
+{
+    m_lastScore = score;
+    m_highScore = std::max(m_highScore, score);
+    m_textScore->setText(
+        "Last: " + std::to_string(m_lastScore) + "   Best: " + std::to_string(m_highScore));
 }
 
 void StateMenu::createTweens()
@@ -191,6 +207,7 @@ void StateMenu::updateDrawables(float const& elapsed)
 {
     m_background->update(elapsed);
     m_textTitle->update(elapsed);
+    m_textScore->update(elapsed);
     m_textStart->update(elapsed);
     m_textExplanation->update(elapsed);
     m_textCredits->update(elapsed);
@@ -203,7 +220,7 @@ void StateMenu::checkForTransitionToStateGame()
 {
     auto const keysToTriggerTransition = { jt::KeyCode::Space, jt::KeyCode::Enter };
 
-    if (std::any_of(std::begin(keysToTriggerTransition),std::end(keysToTriggerTransition) ,
+    if (std::any_of(std::begin(keysToTriggerTransition), std::end(keysToTriggerTransition),
             [this](auto const k) { return getGame()->input().keyboard()->justPressed(k); })) {
         startTransitionToStateGame();
     }
@@ -223,6 +240,7 @@ void StateMenu::onDraw() const
     m_background->draw(renderTarget());
 
     m_textTitle->draw(renderTarget());
+    m_textScore->draw(renderTarget());
     m_textStart->draw(renderTarget());
     m_textExplanation->draw(renderTarget());
     m_textCredits->draw(renderTarget());

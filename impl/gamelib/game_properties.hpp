@@ -10,22 +10,25 @@ class GP {
 public:
     GP() = delete;
 
-    static std::string GameName() { return "MyAwesomeGame"; }
+    static std::string GameName() { return "Asteroidoom"; }
 
-    static std::string AuthorName() { return "TODO"; }
+    static std::string AuthorName() { return "Laguna_999"; }
 
-    static std::string JamName() { return "TODO"; }
+    static std::string JamName() { return "1hgj600"; }
 
-    static std::string JamDate() { return "TODO"; }
+    static std::string JamDate() { return "2026-10-24"; }
 
     static std::string ExplanationText()
     {
-        return "Win the game\n[W,A,S,D] to move \n[Space] to jump\n[M/U] to mute/unmute audio";
+        return "Click asteroids before they hit the ground\n[Space] to jump\n[M/U] to mute/unmute "
+               "audio";
     }
 
     static jt::Vector2f GetWindowSize() { return jt::Vector2f { 1280, 960 }; }
 
     static float GetZoom() { return 4.0f; }
+
+    static float GameDuration() { return 60.0f; }
 
     static jt::Vector2f GetScreenSize() { return GetWindowSize() * (1.0f / GetZoom()); }
 

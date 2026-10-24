@@ -11,6 +11,20 @@
 #include <shape.hpp>
 #include <state_menu.hpp>
 #include <algorithm>
+#include <cmath>
+
+namespace {
+constexpr float startAsteroidCount { 1.0f };
+constexpr float endAsteroidCount { 8.0f };
+constexpr float startFallSpeed { 30.0f };
+constexpr float endFallSpeed { 3.0f * startFallSpeed };
+constexpr float spawnTimeExponent { 2.5f };
+constexpr float spawnTimeMax { 9.0f };
+constexpr float spawnTimeAfterTimeout { 0.05f };
+// default alpha of jt::Vignette
+constexpr float startVignetteAlpha { 140.0f };
+constexpr float endVignetteAlpha { 255.0f };
+} // namespace
 
 void StateGame::onCreate()
 {
@@ -32,7 +46,7 @@ void StateGame::onCreate()
         house->setOffset(jt::Vector2f { -size.x / 2.0f, -size.y });
         house->setPosition(jt::Vector2f {
             jt::Random::getFloat(0.0f, GP::GetScreenSize().x), GP::GetScreenSize().y - 31.0f });
-        house->setColor(GP::getPalette().getColor(1));
+        house->setColor(GP::getPalette().getColor(2));
         m_houses.push_back(house);
     }
 
@@ -41,7 +55,6 @@ void StateGame::onCreate()
     // asteroids are added before vignette and hud, so they are drawn below them
     m_asteroids = std::make_shared<jt::ObjectGroup<Asteroid>>();
     add(m_asteroids);
-    spawnAsteroid();
 
     m_vignette = std::make_shared<jt::Vignette>(GP::GetScreenSize());
     add(m_vignette);
@@ -61,18 +74,58 @@ void StateGame::createPlayer() { }
 void StateGame::spawnAsteroid()
 {
     auto const asteroidSize = 32.0f;
-    auto const fallSpeed = 30.0f;
-    auto const velocity = jt::Vector2f { jt::Random::getFloat(-20.0f, 20.0f), fallSpeed };
-    auto asteroid = std::make_shared<Asteroid>(velocity, [this]() {
-        m_score++;
-        m_hud->getObserverScore()->notify(m_score);
-    });
-    auto const halfSize = asteroidSize / 2.0f;
+    auto const fallSpeed = startFallSpeed + (endFallSpeed - startFallSpeed) * getProgress();
+    auto const groundHeight = 32.0f;
     auto const screenSize = GP::GetScreenSize();
-    asteroid->setPosition(jt::Random::getRandomPointIn(jt::Rectf {
-        halfSize, halfSize, screenSize.x - asteroidSize, screenSize.y - asteroidSize }));
+
+    // start just above the top edge, within the inner 80% of the screen width
+    auto const start
+        = jt::Vector2f { jt::Random::getFloat(0.1f * screenSize.x, 0.9f * screenSize.x),
+              -asteroidSize / 2.0f };
+    // reach the ground within the inner 90% of the screen width
+    auto const target
+        = jt::Vector2f { jt::Random::getFloat(0.05f * screenSize.x, 0.95f * screenSize.x),
+              screenSize.y - groundHeight };
+
+    auto const timeToGround = (target.y - start.y) / fallSpeed;
+    auto const velocity = jt::Vector2f { (target.x - start.x) / timeToGround, fallSpeed };
+
+    auto asteroid = std::make_shared<Asteroid>(
+        velocity,
+        [this]() {
+            m_score++;
+            m_hud->getObserverScore()->notify(m_score);
+        },
+        [this]() { endGame(); });
+    asteroid->setPosition(start);
     add(asteroid);
     m_asteroids->push_back(asteroid);
+}
+
+void StateGame::updateAsteroidSpawning(float const elapsed)
+{
+    m_spawnTimer += elapsed;
+    if (m_spawnTimer >= getSpawnTime()) {
+        spawnAsteroid();
+        m_spawnTimer = 0.0f;
+    }
+}
+
+float StateGame::getProgress() const { return 1.0f - m_timeRemaining / GP::GameDuration(); }
+
+float StateGame::getTargetAsteroidCount() const
+{
+    return startAsteroidCount + (endAsteroidCount - startAsteroidCount) * getProgress();
+}
+
+float StateGame::getSpawnTime() const
+{
+    if (m_timeRemaining <= 0.0f) {
+        return spawnTimeAfterTimeout;
+    }
+    // the further the current count is below the target, the sooner the next asteroid spawns
+    auto const currentCount = static_cast<float>(m_asteroids->size());
+    return std::pow(currentCount / getTargetAsteroidCount(), spawnTimeExponent) * spawnTimeMax;
 }
 
 void StateGame::onUpdate(float const elapsed)
@@ -80,8 +133,18 @@ void StateGame::onUpdate(float const elapsed)
     if (m_running) {
         m_world->step(elapsed, GP::PhysicVelocityIterations(), GP::PhysicPositionIterations());
         // update game logic here
-        m_timeRemaining = std::max(m_timeRemaining - elapsed, 0.0f);
+        auto timeStep = elapsed;
+#ifdef JT_ENABLE_DEBUG
+        if (getGame()->input().keyboard()->justPressed(jt::KeyCode::K)) {
+            timeStep += 10.0f;
+        }
+#endif
+        m_timeRemaining = std::max(m_timeRemaining - timeStep, 0.0f);
         m_hud->getObserverTime()->notify(m_timeRemaining);
+        updateAsteroidSpawning(elapsed);
+        auto const vignetteAlpha
+            = startVignetteAlpha + (endVignetteAlpha - startVignetteAlpha) * getProgress();
+        m_vignette->setColor(jt::Color { 0, 0, 0, static_cast<std::uint8_t>(vignetteAlpha) });
         if (getGame()->input().keyboard()->justPressed(jt::KeyCode::A)) {
             m_scoreP1++;
             m_hud->getObserverScoreP1()->notify(m_scoreP1);
@@ -118,6 +181,19 @@ void StateGame::endGame()
     }
     m_hasEnded = true;
     m_running = false;
+
+    for (auto const& weakAsteroid : *m_asteroids) {
+        if (auto const asteroid = weakAsteroid.lock()) {
+            asteroid->freeze();
+        }
+    }
+
+    if (auto const menu = std::dynamic_pointer_cast<StateMenu>(
+            getGame()->stateManager().getStoredState("menu"))) {
+        menu->setScore(m_score);
+    }
+
+    // the menu has set up a fade to black transition
 
     getGame()->stateManager().switchToStoredState("menu");
 }
