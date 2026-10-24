@@ -20,7 +20,7 @@ public:
 
     static std::string ExplanationText()
     {
-        return "Click asteroids before they hit the ground\n[Space] to jump\n[M/U] to mute/unmute "
+        return "Click asteroids before they hit the ground\n[M/U] to mute/unmute "
                "audio";
     }
 
