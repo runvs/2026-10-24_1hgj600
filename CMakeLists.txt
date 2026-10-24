@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.26)
-set(PROJECTNAME "1hgj600")
+set(PROJECTNAME "asteroidoom")
 project(${PROJECTNAME})
 
 ### Enable CCache
