@@ -14,16 +14,19 @@
 #include <cmath>
 
 namespace {
-constexpr float startAsteroidCount { 1.0f };
-constexpr float endAsteroidCount { 8.0f };
+constexpr float startAsteroidCount { 1.5f };
+constexpr float endAsteroidCount { 12.0f };
 constexpr float startFallSpeed { 30.0f };
 constexpr float endFallSpeed { 3.0f * startFallSpeed };
 constexpr float spawnTimeExponent { 2.5f };
-constexpr float spawnTimeMax { 9.0f };
+constexpr float spawnTimeMax { 7.0f };
 constexpr float spawnTimeAfterTimeout { 0.05f };
 // default alpha of jt::Vignette
 constexpr float startVignetteAlpha { 140.0f };
 constexpr float endVignetteAlpha { 255.0f };
+constexpr float clickShakeDuration { 0.15f };
+// in window pixels, so 4 is one game pixel at zoom 4
+constexpr float clickShakeStrength { 4.0f };
 } // namespace
 
 void StateGame::onCreate()
@@ -95,6 +98,7 @@ void StateGame::spawnAsteroid()
         [this]() {
             m_score++;
             m_hud->getObserverScore()->notify(m_score);
+            getGame()->gfx().camera().shake(clickShakeDuration, clickShakeStrength);
         },
         [this]() { endGame(); });
     asteroid->setPosition(start);
@@ -188,8 +192,8 @@ void StateGame::endGame()
         }
     }
 
-    if (auto const menu = std::dynamic_pointer_cast<StateMenu>(
-            getGame()->stateManager().getStoredState("menu"))) {
+    if (auto const menu
+        = std::dynamic_pointer_cast<StateMenu>(getGame()->stateManager().getStoredState("menu"))) {
         menu->setScore(m_score);
     }
 
