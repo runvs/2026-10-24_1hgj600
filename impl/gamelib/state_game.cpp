@@ -1,6 +1,7 @@
 ﻿#include "state_game.hpp"
 
 #include "random/random.hpp"
+#include <asteroid.hpp>
 #include <box2dwrapper/box2d_world_impl.hpp>
 #include <color/color.hpp>
 #include <game_interface.hpp>
@@ -36,6 +37,11 @@ void StateGame::onCreate()
 
     createPlayer();
 
+    // asteroids are added before vignette and hud, so they are drawn below them
+    m_asteroids = std::make_shared<jt::ObjectGroup<Asteroid>>();
+    add(m_asteroids);
+    spawnAsteroid();
+
     m_vignette = std::make_shared<jt::Vignette>(GP::GetScreenSize());
     add(m_vignette);
     m_hud = std::make_shared<Hud>();
@@ -48,6 +54,18 @@ void StateGame::onCreate()
 void StateGame::onEnter() { }
 
 void StateGame::createPlayer() { }
+
+void StateGame::spawnAsteroid()
+{
+    auto const asteroidSize = 32.0f;
+    auto const fallSpeed = 30.0f;
+    auto const velocity = jt::Vector2f { jt::Random::getFloat(-20.0f, 20.0f), fallSpeed };
+    auto asteroid = std::make_shared<Asteroid>(velocity);
+    asteroid->setPosition(jt::Random::getRandomPointIn(
+        GP::GetScreenSize() - jt::Vector2f { asteroidSize, asteroidSize }));
+    add(asteroid);
+    m_asteroids->push_back(asteroid);
+}
 
 void StateGame::onUpdate(float const elapsed)
 {

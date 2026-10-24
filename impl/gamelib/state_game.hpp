@@ -3,6 +3,7 @@
 
 #include <box2dwrapper/box2d_world_interface.hpp>
 #include <game_state.hpp>
+#include <object_group.hpp>
 #include <memory>
 #include <vector>
 
@@ -13,6 +14,7 @@ class Sprite;
 class Vignette;
 } // namespace jt
 
+class Asteroid;
 class Hud;
 
 class StateGame : public jt::GameState {
@@ -22,6 +24,8 @@ public:
 private:
     std::shared_ptr<jt::Sprite> m_background;
     std::vector<std::shared_ptr<jt::Shape>> m_houses;
+    std::shared_ptr<jt::ObjectGroup<Asteroid>> m_asteroids;
+
     std::shared_ptr<jt::Vignette> m_vignette;
     std::shared_ptr<Hud> m_hud;
     std::shared_ptr<jt::Box2DWorldInterface> m_world { nullptr };
@@ -39,6 +43,7 @@ private:
 
     void endGame();
     void createPlayer();
+    void spawnAsteroid();
 };
 
 #endif
