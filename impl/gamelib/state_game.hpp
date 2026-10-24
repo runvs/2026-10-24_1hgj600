@@ -20,11 +20,12 @@ public:
     std::string getName() const override;
 
 private:
-    std::shared_ptr<jt::Shape> m_background;
+    std::shared_ptr<jt::Sprite> m_background;
+    std::vector<std::shared_ptr<jt::Shape>> m_houses;
     std::shared_ptr<jt::Vignette> m_vignette;
     std::shared_ptr<Hud> m_hud;
     std::shared_ptr<jt::Box2DWorldInterface> m_world { nullptr };
-    
+
     bool m_running { true };
     bool m_hasEnded { false };
 

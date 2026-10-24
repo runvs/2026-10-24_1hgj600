@@ -1,4 +1,6 @@
 ﻿#include "state_game.hpp"
+
+#include "random/random.hpp"
 #include <box2dwrapper/box2d_world_impl.hpp>
 #include <color/color.hpp>
 #include <game_interface.hpp>
@@ -17,11 +19,20 @@ void StateGame::onCreate()
 
     using jt::Shape;
 
-    m_background = std::make_shared<Shape>();
-    m_background->makeRect({ w, h }, textureManager());
-    m_background->setColor(GP::PaletteBackground());
+    m_background = std::make_shared<jt::Sprite>("assets/background.png", textureManager());
     m_background->setIgnoreCamMovement(true);
     m_background->update(0.0f);
+
+    for (auto i = 0; i != 10; ++i) {
+        auto house = std::make_shared<jt::Shape>();
+        auto size = jt::Random::getRandomPointIn(jt::Rectf { 16.0f, 24.0f, 32.0f, 54.0f });
+        house->makeRect(size, textureManager());
+        house->setOffset(jt::Vector2f { -size.x / 2.0f, -size.y });
+        house->setPosition(jt::Vector2f {
+            jt::Random::getFloat(0.0f, GP::GetScreenSize().x), GP::GetScreenSize().y - 31.0f });
+        house->setColor(GP::getPalette().getColor(1));
+        m_houses.push_back(house);
+    }
 
     createPlayer();
 
@@ -58,12 +69,18 @@ void StateGame::onUpdate(float const elapsed)
     }
 
     m_background->update(elapsed);
+    for (auto& h : m_houses) {
+        h->update(elapsed);
+    }
     m_vignette->update(elapsed);
 }
 
 void StateGame::onDraw() const
 {
     m_background->draw(renderTarget());
+    for (auto& h : m_houses) {
+        h->draw(renderTarget());
+    }
     drawObjects();
     m_vignette->draw();
     m_hud->draw();
