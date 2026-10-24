@@ -8,17 +8,17 @@ jt::Palette createPalette()
     jt::PaletteBuilder builder;
     return builder
         .addColorsFromGPL(R"(GIMP Palette
-#Palette Name: Dreamscape8
-#Description: A palette made of low saturation colours to give your art a dreamlike quality.
+#Palette Name: COSMO ZOIDS
+#Description: A Star Command approved set of 8 colors.
 #Colors: 8
-201	204	161	c9cca1
-202	160	90	caa05a
-174	106	71	ae6a47
-139	64	73	8b4049
-84	51	68	543344
-81	82	98	515262
-99	120	125	63787d
-142	160	145	8ea091
+129	214	151	81d697
+58	162	136	3aa288
+37	113	113	257171
+19	67	78	13434e
+14	35	78	0e234e
+101	72	169	6548a9
+170	107	208	aa6bd0
+237	158	237	ed9eed
 )")
         .create();
 }
@@ -34,4 +34,5 @@ jt::Palette GP::getPalette()
 int GP::PhysicVelocityIterations() { return 20; }
 
 int GP::PhysicPositionIterations() { return 20; }
+
 jt::Vector2f GP::PlayerSize() { return jt::Vector2f { 16.0f, 16.0f }; }
